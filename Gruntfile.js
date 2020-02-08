@@ -12,11 +12,9 @@ module.exports = function(grunt){
             '/*!',
             ' * Datepicker for Bootstrap v<%= pkg.version %> (<%= pkg.homepage %>)',
             ' *',
-            ' * Copyright 2012 Stefan Petre',
-            ' * Improvements by Andrew Rowls',
-            ' * Licensed under the Apache License v2.0 (http://www.apache.org/licenses/LICENSE-2.0)',
+            ' * Licensed under the Apache License v2.0 (https://www.apache.org/licenses/LICENSE-2.0)',
             ' */'
-        ].join('\n'),
+        ].join('\n') + '\n',
 
         // Task configuration.
         clean: {
@@ -55,11 +53,13 @@ module.exports = function(grunt){
         },
         qunit: {
             main: 'tests/tests.html',
-            timezone: 'tests/timezone.html'
+            timezone: 'tests/timezone.html',
+            options: {
+                console: false
+            }
         },
         concat: {
             options: {
-                banner: '<%= banner %>',
                 stripBanners: true
             },
             main: {
@@ -123,20 +123,15 @@ module.exports = function(grunt){
         },
         usebanner: {
             options: {
-                position: 'top',
                 banner: '<%= banner %>'
             },
-            css: {
-                files: {
-                    src: 'dist/css/*.css'
-                }
-            }
+            css: 'dist/css/*.css',
+            js: 'dist/js/**/*.js'
         },
         cssmin: {
             options: {
                 compatibility: 'ie8',
                 keepSpecialComments: '*',
-                sourceMap: true,
                 advanced: false
             },
             main: {
@@ -213,11 +208,11 @@ module.exports = function(grunt){
     require('time-grunt')(grunt);
 
     // JS distribution task.
-    grunt.registerTask('dist-js', ['concat', 'uglify:main', 'uglify:locales']);
+    grunt.registerTask('dist-js', ['concat', 'uglify:main', 'uglify:locales', 'usebanner:js']);
 
     // CSS distribution task.
     grunt.registerTask('less-compile', 'less');
-    grunt.registerTask('dist-css', ['less-compile', 'cssmin:main', 'cssmin:standalone', 'usebanner']);
+    grunt.registerTask('dist-css', ['less-compile', 'cssmin:main', 'cssmin:standalone', 'usebanner:css']);
 
     // Full distribution task.
     grunt.registerTask('dist', ['clean:dist', 'dist-js', 'dist-css']);
@@ -231,32 +226,6 @@ module.exports = function(grunt){
     // Version numbering task.
     // grunt bump-version --newver=X.Y.Z
     grunt.registerTask('bump-version', 'string-replace');
-
-    // Docs task.
-    grunt.registerTask('screenshots', 'Rebuilds automated docs screenshots', function(){
-        var phantomjs = require('phantomjs').path;
-
-        grunt.file.recurse('docs/_static/screenshots/', function(abspath){
-            grunt.file.delete(abspath);
-        });
-
-        grunt.file.recurse('docs/_screenshots/', function(abspath, root, subdir, filename){
-            if (!/.html$/.test(filename))
-                return;
-            subdir = subdir || '';
-
-            var outdir = "docs/_static/screenshots/" + subdir,
-                outfile = outdir + filename.replace(/.html$/, '.png');
-
-            if (!grunt.file.exists(outdir))
-                grunt.file.mkdir(outdir);
-
-            grunt.util.spawn({
-                cmd: phantomjs,
-                args: ['docs/_screenshots/script/screenshot.js', abspath, outfile]
-            });
-        });
-    });
 
     grunt.registerTask('qunit-timezone', 'Run timezone tests', function(){
         process.env.TZ = 'Europe/Moscow';
